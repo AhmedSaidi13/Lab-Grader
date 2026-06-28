@@ -1,8 +1,8 @@
 # Lab-Grader 🧪
 
-> **Automatic Test Case Generation and Comprehensive Evaluation of C Programming Assignments**
+> Automatic Test Case Generation and Comprehensive Evaluation of C Programming Assignments
 
-Lab-Grader is an academic web platform that automates the full evaluation lifecycle of C programming assignments in university laboratory courses. Professors upload a reference solution — the system generates test cases automatically, students submit their code before the deadline, and the platform compiles, executes, and grades every submission without manual intervention. Each student receives an individualised evaluation report with a score out of 20, per-test results, static analysis observations, and structured feedback.
+Lab-Grader is an academic web platform that automates the full evaluation lifecycle of C programming assignments in university laboratory courses. Professors upload a reference solution, the system generates test cases automatically, students submit their code before the deadline, and the platform compiles, executes, and grades every submission without manual intervention. Each student receives an individualised evaluation report with a score out of 20, per-test results, static analysis observations, and structured feedback.
 
 ---
 
@@ -26,18 +26,18 @@ Lab-Grader is an academic web platform that automates the full evaluation lifecy
 
 ## Features
 
-- 🔄 **Automatic test case generation** from a professor's C reference solution
-- 🔬 **Hybrid evaluation** — static analysis (pycparser AST) + dynamic black-box execution (Docker + GCC)
-- 🛡️ **Secure sandboxed execution** — isolated Docker containers with strict memory, CPU, and network limits
-- 📊 **Scoring out of 20** — weighted test cases, late penalty, per-test breakdown
-- 💬 **Individualised multilayer feedback** — rule-based diagnostics + optional Claude API suggestions
-- 🔔 **Real-time notifications** — students notified automatically upon evaluation completion
-- 📅 **Deadline-based evaluation** — all submissions evaluated automatically when the deadline expires
-- 👩‍🏫 **Professor dashboard** — submission statistics, leaderboard, per-student score tracking
-- 🎓 **Student dashboard** — recent submissions, upcoming deadlines, score history
-- 🔁 **Solution replacement** — students can replace submissions before the deadline
-- 📁 **Multi-file support** — configurable maximum files per assignment
-- 🤖 **Claude API fallback** — AI-assisted test generation and feedback enrichment
+- 🔄 Automatic test case generation: from a professor's C reference solution
+- 🔬 Hybrid evaluation: static analysis (pycparser AST) + dynamic black-box execution (Docker + GCC)
+- 🛡️ Secure sandboxed execution: isolated Docker containers with strict memory, CPU, and network limits
+- 📊 Scoring out of 20: weighted test cases, late penalty, per-test breakdown
+- 💬 Individualised multilayer feedback: rule-based diagnostics + optional Claude API suggestions
+- 🔔 Real-time notifications: students notified automatically upon evaluation completion
+- 📅 Deadline-based evaluation: all submissions evaluated automatically when the deadline expires
+- 👩‍🏫 Professor dashboard: submission statistics, leaderboard, per-student score tracking
+- 🎓 Student dashboard: recent submissions, upcoming deadlines, score history
+- 🔁 Solution replacement: students can replace submissions before the deadline
+- 📁 Multi-file support: configurable maximum files per assignment
+- 🤖 Claude API fallback: AI-assisted test generation and feedback enrichment
 
 ---
 
