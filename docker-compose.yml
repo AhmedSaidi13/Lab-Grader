@@ -1,0 +1,158 @@
+version: "3.9"
+
+x-backend-env: &backend-env
+  DATABASE_URL:      postgresql+asyncpg://grader:grader123@postgres:5432/graderdb
+  SYNC_DATABASE_URL: postgresql://grader:grader123@postgres:5432/graderdb
+  REDIS_URL:         redis://redis:6379/0
+  SANDBOX_IMAGE:     c-sandbox:latest
+  UPLOAD_DIR:        /app/uploads
+  APP_ENV:           development
+  SECRET_KEY:        supersecretkey-change-in-production-32chars
+  ACCESS_TOKEN_EXPIRE_MINUTES: "1440"
+  MAX_FILE_SIZE_MB:  "5"
+  USE_LLM_FEEDBACK:  "false"
+  ANTHROPIC_API_KEY: ""
+
+# Code mount only — uploads is a separate bind mount on host
+x-backend-volumes: &backend-volumes
+  - ./backend:/app
+  - ./uploads:/app/uploads
+  - /var/run/docker.sock:/var/run/docker.sock
+
+x-depends: &base-depends
+  postgres:
+    condition: service_healthy
+  redis:
+    condition: service_healthy
+
+services:
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: grader_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     grader
+      POSTGRES_PASSWORD: grader123
+      POSTGRES_DB:       graderdb
+      PGDATA:            /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grader -d graderdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 15s
+
+  redis:
+    image: redis:7-alpine
+    container_name: grader_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 10s
+
+  api:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    image: grader-backend:latest
+    container_name: grader_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      <<: *backend-env
+    volumes: *backend-volumes
+    depends_on:
+      <<: *base-depends
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile.worker
+    image: grader-worker:latest
+    container_name: grader_worker
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+    volumes: *backend-volumes
+    depends_on:
+      <<: *base-depends
+    command: >
+      celery -A app.workers.celery_app.celery_app worker
+      --queues evaluation,generation,default,maintenance
+      --concurrency 2
+      --loglevel info
+
+  beat:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile.worker
+    container_name: grader_beat
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+    volumes:
+      - ./backend:/app
+      - ./uploads:/app/uploads
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: >
+      celery -A app.workers.celery_app.celery_app beat
+      --loglevel info
+
+  flower:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile.worker
+    container_name: grader_flower
+    restart: unless-stopped
+    environment:
+      <<: *backend-env
+    ports:
+      - "5555:5555"
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: >
+      celery -A app.workers.celery_app.celery_app flower
+      --port=5555
+      --basic_auth=admin:grader123
+
+  frontend:
+    build:
+      context:    ./frontend
+      dockerfile: Dockerfile.frontend
+    container_name: grader_frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  redis_data:

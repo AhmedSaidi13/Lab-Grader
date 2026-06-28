@@ -1,0 +1,28 @@
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gcc \
+        cpp \
+        g++ \
+        libpq-dev \
+        curl \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Docker CLI for sandbox execution
+RUN curl -fsSL https://get.docker.com | sh
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip \
+ && pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+RUN mkdir -p /app/uploads
+
+# Workers run as root to access Docker socket
+CMD ["celery", "-A", "app.workers.celery_app.celery_app", "worker", \
+     "--queues", "evaluation,generation,default,maintenance", \
+     "--concurrency", "2", "--loglevel", "info"]

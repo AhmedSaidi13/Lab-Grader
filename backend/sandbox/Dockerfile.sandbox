@@ -1,0 +1,18 @@
+FROM --platform=linux/amd64 debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gcc \
+        libc6-dev \
+        coreutils \
+        bash \
+        coreutils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create sandbox user uid=999
+RUN groupadd -r -g 999 sandbox && \
+    useradd -r -u 999 -g 999 -m -d /sandbox -s /bin/bash sandbox
+
+# /tmp is writable by everyone by default
+WORKDIR /tmp
+
+CMD ["sleep", "120"]
